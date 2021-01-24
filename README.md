@@ -9,4 +9,4 @@ bot that composes original memes based on sentiment and semantics of conversatio
 ## [pipreqs](https://github.com/bndr/pipreqs)
 - pip install pipreqs
 - pipreqs <path of requirements.txt>
- - pipreqs . (curdir)
+ - pipreqs --force . (create reqs in curdur, overwrite if necessary)
