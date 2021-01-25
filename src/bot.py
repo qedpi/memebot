@@ -14,6 +14,8 @@
 #           f"with access to: \n {' & '.join(str(g) for g in bot.guilds)}{HR}")
 
 import os
+import json
+from urllib.request import Request, urlopen
 import random
 
 import discord
@@ -70,8 +72,8 @@ async def roll(ctx, number_of_dice: int, number_of_sides: int):
     ]
     await ctx.send(', '.join(dice))
 
-@bot.command(name='meme', help='Simulates rolling dice.')
-async def roll(ctx, top_text: str, bottom_text: str=''):
+@bot.command(name='meme', help='Generates shitty meme')
+async def meme(ctx, top_text: str, bottom_text: str=''):
     if not bottom_text:
         res = f"https://api.memegen.link/images/buzz/memes/{top_text}.png"
     else:
@@ -91,5 +93,51 @@ async def nine_nine(ctx):
 
     response = random.choice(brooklyn_99_quotes)
     await ctx.send(response)
+
+def fetchTemplates():
+    req = Request('https://api.memegen.link/templates', headers={'User-Agent': 'Mozilla/5.0'})
+    webpage = urlopen(req).read().decode()
+    data = json.loads(webpage)
+    return data
+
+templates = fetchTemplates()
+
+@bot.command(name='test')
+async def test(ctx):
+    this_channel = ctx.channel.id
+    channel = bot.get_channel(int(this_channel))
+
+    messages = await channel.history(limit=3).flatten()
+    messages = list(filter(lambda x: not x.author.bot, messages))
+    messages.reverse()
+    # for message in messages:
+    #     print(message.author)
+    #     print(message.author.bot)
+    #     print(message.content)
+
+    top_text: str = messages[0].content.replace(' ', '_')
+    bottom_text: str = messages[1].content.replace(' ', '_') if len(messages) > 1 else ""
+    # print(top_text)
+    # print(bottom_text)
+    # print(templates)
+
+    if not bottom_text:
+        filtered_templates = list(filter(lambda x: not x["lines"] == 1, templates))
+        rand_int = random.randint(0, len(filtered_templates) - 1)
+        template = filtered_templates[rand_int]["key"]
+        res = f"https://api.memegen.link/images/{template}/memes/{top_text}.png"
+    else:
+        filtered_templates = list(filter(lambda x: not x["lines"] == 1, templates))
+        rand_int = random.randint(0, len(filtered_templates) - 1)
+        template = filtered_templates[rand_int]["key"]
+        res = f"https://api.memegen.link/images/{template}/{top_text}/{bottom_text}.png"
+    # print(res)
+    await ctx.send(res)
+
+    # response = []
+    # for message in messages:
+    #     response.append(message.content)
+    # response = "\n".join(response)
+    # await ctx.send(response)
 
 bot.run(TOKEN)
