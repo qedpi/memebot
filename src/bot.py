@@ -101,6 +101,7 @@ def fetchTemplates():
     return data
 
 templates = fetchTemplates()
+two_line_templates = list(filter(lambda x: not x["lines"] == 2, templates))
 
 @bot.command(name='test')
 async def test(ctx):
@@ -139,5 +140,30 @@ async def test(ctx):
     #     response.append(message.content)
     # response = "\n".join(response)
     # await ctx.send(response)
+
+message_history = []
+@bot.event
+async def on_message(message):
+    if message.author.bot:
+        return
+
+    global message_history
+    message_history.append(message.content)
+    if len(message_history) == 2:
+        top_text: str = message_history[0].replace(' ', '_')
+        bottom_text: str = message_history[1].replace(' ', '_')
+
+        two_line_templates = list(filter(lambda x: not x["lines"] == 1, templates))
+        rand_int = random.randint(0, len(two_line_templates) - 1)
+        template = two_line_templates[rand_int]["key"]
+        res = f"https://api.memegen.link/images/{template}/{top_text}/{bottom_text}.png"
+
+        message_history = []
+        meme_message = await message.channel.send(res)
+
+        #emoji reaction
+        emojis = ['\N{THUMBS UP SIGN}', '\N{THUMBS DOWN SIGN}']
+        for emoji in emojis:
+            await meme_message.add_reaction(emoji)
 
 bot.run(TOKEN)
