@@ -10,3 +10,8 @@ bot that composes original memes based on sentiment and semantics of conversatio
 - pip install pipreqs
 - pipreqs <path of requirements.txt>
  - pipreqs --force . (create reqs in curdur, overwrite if necessary)
+
+# expert.ai integration
+- pip install -U expertai-nlapi
+- set uname & pass in os.env
+- init client
