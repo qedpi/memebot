@@ -17,6 +17,7 @@ import os
 import json
 from urllib.request import Request, urlopen
 import random
+from expertai_test import compute_message_list_sentiment
 
 import discord
 from discord.ext import commands
@@ -102,6 +103,7 @@ def fetchTemplates():
 
 templates = fetchTemplates()
 two_line_templates = list(filter(lambda x: not x["lines"] == 2, templates))
+two_line_templates = list(map(lambda x: x["key"], two_line_templates))
 
 @bot.command(name='test')
 async def test(ctx):
@@ -128,7 +130,7 @@ async def test(ctx):
         template = filtered_templates[rand_int]["key"]
         res = f"https://api.memegen.link/images/{template}/memes/{top_text}.png"
     else:
-        filtered_templates = list(filter(lambda x: not x["lines"] == 1, templates))
+        filtered_templates = list(filter(lambda x: not x["lines"] == 2, templates))
         rand_int = random.randint(0, len(filtered_templates) - 1)
         template = filtered_templates[rand_int]["key"]
         res = f"https://api.memegen.link/images/{template}/{top_text}/{bottom_text}.png"
@@ -150,18 +152,32 @@ async def on_message(message):
     global message_history
     message_history.append(message.content)
     if len(message_history) == 2:
-        top_text: str = message_history[0].replace(' ', '_')
-        bottom_text: str = message_history[1].replace(' ', '_')
+        top_text: str = message_history[0]
+        bottom_text: str = message_history[1]
 
-        two_line_templates = list(filter(lambda x: not x["lines"] == 1, templates))
-        rand_int = random.randint(0, len(two_line_templates) - 1)
-        template = two_line_templates[rand_int]["key"]
+        sentiment = compute_message_list_sentiment([ top_text, bottom_text ])
+        sentiment_score = sentiment[0] + sentiment[1]
+        # print(sentiment[0])
+        # print(sentiment[1])
+        # print(sentiment_score)
+
+        top_text = top_text.replace(' ', '_')
+        bottom_text = bottom_text.replace(' ', '_')
+
+        meme_templates = two_line_templates # neutral
+        if sentiment_score > 10:
+            meme_templates = ["ggg", "feelsgood", "icanhas"] # happy
+        elif sentiment_score < -10:
+            meme_templates = ["sad-biden", "harold", "fr", "grumpycat", "sadfrog"] # sad
+
+        rand_int = random.randint(0, len(meme_templates) - 1)
+        template = meme_templates[rand_int]
         res = f"https://api.memegen.link/images/{template}/{top_text}/{bottom_text}.png"
 
         message_history = []
         meme_message = await message.channel.send(res)
 
-        #emoji reaction
+        # emoji reaction
         emojis = ['\N{THUMBS UP SIGN}', '\N{THUMBS DOWN SIGN}']
         for emoji in emojis:
             await meme_message.add_reaction(emoji)
