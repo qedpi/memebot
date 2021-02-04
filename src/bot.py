@@ -19,6 +19,7 @@ GUILD = "memebot's hideout"  # todo: place with .env for prod
 bot = commands.Bot(command_prefix='!')
 
 message_history = []
+APPROVED_CHANNELS = ['bot']
 
 
 @bot.event
@@ -27,7 +28,7 @@ async def on_ready():
 
 
 @bot.command(name='meme', help='Generates shitty meme')
-async def meme(ctx, top_text: str, bottom_text: str=''):
+async def meme(ctx, top_text: str, bottom_text: str = ''):
     if not bottom_text:
         res = f"https://api.memegen.link/images/buzz/memes/{top_text}.png"
     else:
@@ -50,6 +51,10 @@ two_line_templates = [x['key'] for x in templates if x['lines'] == 2]
 @bot.event
 async def on_message(message):
     if message.author.bot:
+        return
+
+    print(message.channel.name)
+    if message.channel.name not in APPROVED_CHANNELS:
         return
 
     global message_history
